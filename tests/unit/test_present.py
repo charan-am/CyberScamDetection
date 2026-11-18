@@ -58,6 +58,59 @@ def test_disclaimer_mentions_not_a_scam_detector_for_all_crimes():
     assert "sms" in text
 
 
-def test_privacy_note_mentions_no_storage():
+def test_privacy_note_does_not_claim_hosting_guarantees():
     text = present.privacy_note().lower()
-    assert "not stored" in text or "not saved" in text or "no message" in text
+    assert "does not intentionally" in text
+    assert "entirely on the local machine" not in text
+
+
+def test_gauge_score_rescales_raw_output_to_ten():
+    assert present.gauge_score(0.93) == 9.3
+    assert present.gauge_score(0.27) == 2.7
+    assert present.gauge_score(0.0) == 0.0
+
+
+def test_gauge_score_is_clamped_to_the_scale():
+    assert present.gauge_score(1.4) == 10.0
+    assert present.gauge_score(-0.3) == 0.0
+
+
+def test_gauge_threshold_uses_the_same_scale():
+    assert present.gauge_threshold(0.27) == 2.7
+    assert present.gauge_threshold(1.2) == 10.0
+
+
+def test_gauge_heading_and_ends_are_plain_language():
+    assert present.gauge_heading() == "Model Spam Signal"
+    assert present.gauge_ends() == ("Lower model signal", "Higher model signal")
+
+
+def test_score_caption_includes_visual_score_and_disclaimer():
+    caption = present.score_caption(0.93, 0.27)
+    assert "9.3/10" in caption
+    assert "2.7/10" in caption
+    assert "uncalibrated" in caption.lower()
+    assert "not a probability" in caption
+    assert "%" not in caption
+
+
+def test_ham_label_is_no_spam_pattern_detected():
+    assert present.label_text("ham") == "No spam pattern detected"
+
+
+def test_each_label_carries_a_safety_caveat():
+    assert "not a guarantee" in present.result_caveat("ham").lower()
+    assert "not proof" in present.result_caveat("spam").lower()
+
+
+def test_hosted_privacy_note_names_streamlit_cloud_and_limits():
+    text = present.hosted_privacy_note()
+    assert "Streamlit Community Cloud" in text
+    assert "Streamlit" in text
+    assert "external" in text.lower()
+    assert "independently verified" in text
+
+
+def test_local_privacy_note_describes_local_execution():
+    assert "your own machine" in present.local_privacy_note().lower()
+
