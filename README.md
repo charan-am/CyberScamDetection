@@ -1,37 +1,46 @@
 # AI-Based Cyber Scam Detection and Awareness System
 
 An explainable machine-learning application that classifies English SMS messages as
-legitimate or potentially suspicious, and teaches Indian users to recognise and report
-real scam patterns.
+ordinary (ham) or scam-like (spam), explains the model's decision, and teaches Indian
+users to recognise and report real scam patterns in **English and Kannada**.
 
-**Status:** Phase 0 complete — environment and project skeleton. The Streamlit
-interface and trained model arrive in later phases.
+The project was built as a PBL (project-based learning) submission. It is a genuine
+end-to-end ML system: a real public dataset, reproducible training, a checksummed model
+artifact, a tested Streamlit interface, and documented performance measured on held-out
+data. No metric in this repository is invented.
 
-## What this project will do
+---
 
-- Classify an SMS with a TF-IDF + Logistic Regression pipeline trained on the
-  UCI SMS Spam Collection.
-- Show the predicted class together with the model's raw output, explicitly labelled
-  as uncalibrated, plus the words the model weighted.
-- Separate model explanations, rule-based message indicators, and verified awareness
-  guidance into three distinct layers.
-- Provide Indian cyber awareness material (UPI, OTP, phishing, fake jobs, lottery,
-  investment, banking impersonation) in English and Kannada, with official reporting
-  information and recorded verification dates.
-- Report the model's actual measured performance, including its limitations.
+## What the application does
 
-The classifier is **English-only**. Kannada appears only in educational content, is
-marked `reviewed: false` until a Kannada speaker verifies it, and no Kannada detection
+Four user-facing areas, available as tabs in one Streamlit app:
+
+| Area | Contents |
+|---|---|
+| **Message detection** | Paste an SMS, get the predicted class, the raw model score (explicitly labelled uncalibrated), the words that moved the decision, rule-based message characteristics, and tailored safety guidance |
+| **Cyber awareness** | Seven Indian scam categories — UPI, OTP, phishing, fake jobs, lottery/prize, investment, banking impersonation/KYC — in English and Kannada, plus official reporting channels with verified dates |
+| **Model performance** | Real test-split metrics, confusion matrix, baseline comparison, model configuration, and an explicit list of what the numbers do not cover |
+| **About & privacy** | How a prediction is produced, dataset attribution, model artifact details, privacy guarantees, licences |
+
+The three analysis layers are deliberately kept separate and labelled in the interface:
+
+1. **Model prediction and explanation** — logistic-regression coefficients × TF-IDF values.
+2. **Rule-based characteristics** — links, OTP requests, prize claims, urgency, amounts.
+3. **Verified awareness guidance** — curated advice from `content/*.json`, independent of the model.
+
+The classifier is **English-only**. Kannada exists only as educational content and is
+marked `reviewed: false` until a Kannada speaker verifies it. No Kannada detection
 ability is claimed.
 
-## Requirements
+---
 
-- Windows (CMD commands below)
-- [uv](https://docs.astral.sh/uv/) — dependencies are installed with `uv pip`
-- Python **3.12.16** (uv-managed). Python 3.14 is not supported and the test suite
-  fails if it is used. `pip.exe` is blocked on this machine, so do not use bare `pip`.
+## Quick start (Windows, CMD)
 
-## Setup
+Requirements: Windows, [uv](https://docs.astral.sh/uv/), network access for the first
+setup. Python 3.12.16 is installed and pinned by uv; Python 3.14 is rejected by the
+test suite. Use `uv pip`, never bare `pip` (blocked on the development machine), and
+launch Streamlit through `python -m streamlit` (the `.exe` launcher may be blocked by
+Application Control).
 
 ```cmd
 cd /d "%USERPROFILE%\CyberScamDetection"
@@ -40,38 +49,160 @@ uv venv --python 3.12.16 .venv
 uv pip install -r requirements.txt -r requirements-dev.txt
 uv pip install -e .
 python -m pytest
+python -m streamlit run app\streamlit_app.py
 ```
 
-Expected: `3 passed`.
+The trained artifact is committed, so the app runs immediately after setup. If you want
+to reproduce training from the raw dataset:
+```cmd
+python scripts\get_data.py
+python scripts\prepare_data.py
+python scripts\train_model.py
+python scripts\verify_artifact.py
+```
 
-## Run the application
+`python -m pytest` runs the full suite (99 tests). The expected result is
+`99 passed`.
 
-Available from Phase 3:
+---
+
+## Results (measured, not estimated)
+
+Trained on 4,115 messages, threshold chosen on a 514-message validation split, evaluated
+**once** on a 515-message test split that no earlier step used.
+
+| Metric (test split) | Value |
+|---|---|
+| Accuracy | 0.9845 |
+| Precision (spam) | 0.8986 |
+| Recall (spam) | 0.9841 |
+| F1 (spam) | 0.9394 |
+| ROC-AUC | 0.9981 |
+| PR-AUC | 0.9889 |
+
+Confusion matrix: 445 true ham, 7 false spam, 1 missed spam, 62 true spam.
+
+| Model (same test split) | Precision | Recall | F1 |
+|---|---|---|---|
+| TF-IDF + Logistic Regression | 0.8986 | 0.9841 | **0.9394** |
+| Majority class (always ham) | 0.0000 | 0.0000 | 0.0000 |
+| Single-keyword rule | 0.5843 | 0.8254 | 0.6842 |
+
+Full details are in `reports/metrics.json`, `reports/baseline_comparison.csv`,
+`reports/confusion_matrix.csv` and `docs/model-card.md`.
+
+The dataset is small, from 2011, and SMS-only. These numbers describe performance on
+that dataset, not on modern WhatsApp, email or voice scams.
+
+---
+
+## Repository layout
+
+```
+CyberScamDetection/
+├── app/
+│   └── streamlit_app.py          # the only Streamlit entry point
+├── content/
+│   ├── awareness_en.json         # reviewed English awareness content
+│   ├── awareness_kn.json         # Kannada content, review status false
+│   └── reporting.json            # official Indian reporting channels + dates
+├── data/
+│   ├── raw/                      # original UCI files (attribution in data/README.md)
+│   └── processed/                # generated splits (git-ignored, reproducible)
+├── docs/
+│   ├── dataset.md                # provenance, licence, integrity checks
+│   ├── model-card.md             # intended use, metrics, limitations, ethics
+│   ├── architecture.md           # layers, data flow, module responsibilities
+│   ├── demo-script.md            # five-minute demonstration script
+│   ├── phase0-verification.md    # environment evidence
+│   └── superpowers/              # approved design and plans
+├── models/
+│   ├── scam_clf.joblib           # 194 KB trained pipeline
+│   ├── scam_clf.joblib.sha256    # checksum verified before every load
+│   └── README.md
+├── reports/                      # metrics, baselines, split and conflict reports
+├── scripts/                      # get_data, prepare_data, train_model, verify_artifact
+├── src/scamdetector/             # domain package (no Streamlit imports)
+│   ├── config.py                 # paths, seed, hyper-parameters, term lists
+│   ├── data.py                   # loading, dedupe, leakage-free splits
+│   ├── features.py               # masking, normalisation, TF-IDF
+│   ├── train.py                  # search, threshold selection, persistence
+│   ├── evaluate.py               # metrics, baselines, reports
+│   ├── predict.py                # checksum verification, validation, inference
+│   ├── explain.py                # contributions and rule-based signals
+│   ├── present.py                # honest UI strings (testable, no Streamlit)
+│   └── awareness.py              # validated bilingual content and channels
+└── tests/                        # 99 unit and integration tests
+```
+
+Training code never imports Streamlit. The app never trains: it loads
+`models/scam_clf.joblib` only after verifying its SHA-256, and refuses artifacts whose
+scikit-learn major/minor version differs from the installed one.
+
+---
+
+## Dataset
+
+**UCI SMS Spam Collection** — Almeida, T. A., Gómez Hidalgo, J. M., and Yamakami, A.
+(2011). *Contributions to the study of SMS spam filtering: new collection and results.*
+Distributed by the UCI Machine Learning Repository under **CC BY 4.0**.
+
+- 5,574 raw messages (4,827 ham, 747 spam), SHA-256 verified on download.
+- 430 exact duplicate messages removed before splitting; 0 conflicting labels.
+- 5,144 unique messages split 4,115 / 514 / 515 (train / validation / test), stratified.
+- Zero overlap between splits, asserted by an automated leakage test.
+
+Attribution and integrity details: `data/README.md`, `docs/dataset.md`,
+`THIRD_PARTY_NOTICES.md`.
+
+---
+
+## Testing
 
 ```cmd
-streamlit run app\streamlit_app.py
+python -m pytest
+python -m pytest -m "not slow"
 ```
 
-## Project layout
+The suite covers data parsing and integrity, dedupe and leakage, threshold selection,
+artifact checksum and version checks, prediction validation, explanation direction,
+presentation strings, content schema and review flags, and the Streamlit app itself
+(rendering, spam and ham predictions, empty input, clear button, Kannada warning,
+performance metrics) through `streamlit.testing.v1.AppTest`.
 
-| Path | Purpose |
-|---|---|
-| `src/scamdetector/` | Domain package: data, features, training, evaluation, prediction, explanation |
-| `app/` | Streamlit interface (later phase) |
-| `tests/` | Pytest suite |
-| `data/` | Dataset and provenance |
-| `content/` | Bilingual awareness content and reporting sources |
-| `models/` | Trained artifact and checksum |
-| `reports/` | Generated metrics and split reports |
-| `docs/` | Design document, plans, model card |
-
-## Licensing
-
-Original code is MIT licensed (see `LICENSE`). The UCI SMS Spam Collection is used
-under CC BY 4.0 and is attributed separately in `THIRD_PARTY_NOTICES.md`. The two
-licenses are not interchangeable.
+---
 
 ## Privacy
 
-The application is designed to hold submitted messages in session state only: not
-written to disk, not logged, and not sent to any third party.
+Submitted messages are processed in memory, are never written to disk, never logged,
+and never sent to a third-party service. Links, emails, amounts and phone numbers are
+replaced with placeholders before the text reaches the model. The app runs locally with
+no paid APIs and no analytics.
+
+---
+
+## Limitations
+
+- English SMS only; the model has never seen Kannada or other Indian-language messages.
+- Dataset from 2011; modern scam channels (WhatsApp, RCS, email, voice, deepfakes) are
+  out of distribution.
+- Binary ham/spam classification; it does not identify scam type and cannot confirm
+  that a message is a crime.
+- The score is uncalibrated and is never presented as a probability or a percentage.
+- 1 of 63 spam messages in the test split was missed; 7 ham messages were flagged.
+- Kannada content is an unreviewed translation and is labelled as such in the app.
+- Screenshots are not bundled because the build machine has no browser automation;
+  the interface is verified by 10 AppTest integration tests instead.
+
+---
+
+## Licences
+
+Original code: **MIT** (`LICENSE`). Dataset: **CC BY 4.0** (UCI), attributed separately
+in `THIRD_PARTY_NOTICES.md`. The two licences are not interchangeable.
+
+## Acknowledgements
+
+Dataset authors and the UCI Machine Learning Repository; the Government of India
+National Cyber Crime Reporting Portal, RBI Sachet and CERT-In for the public reporting
+information referenced in `content/reporting.json`.
