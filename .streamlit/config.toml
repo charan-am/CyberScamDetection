@@ -1,0 +1,14 @@
+[theme]
+base = "dark"
+primaryColor = "#2bb3a3"
+backgroundColor = "#070d15"
+secondaryBackgroundColor = "#0e2132"
+textColor = "#eaf6ff"
+font = "sans serif"
+
+[browser]
+# Do not send usage statistics to Streamlit from any deployment of this app.
+gatherUsageStats = false
+
+[server]
+headless = true

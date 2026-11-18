@@ -47,7 +47,21 @@ def test_spam_message_receives_prediction_and_three_layers():
     assert "Layer 2" in rendered
     assert "Layer 3" in rendered
     assert "not a probability" in rendered
-    assert "%" not in next(m.value for m in at.markdown if "Raw model score" in m.value)
+    assert "%" not in next(m.value for m in at.markdown if "linear rescaling" in m.value)
+
+
+def test_gauge_shows_signal_threshold_and_disclaimer():
+    at = _app()
+    at.text_area[0].set_value(SPAM_TEXT)
+    at.button[0].click().run()
+
+    assert not at.exception
+    rendered = "\n".join(m.value for m in at.markdown)
+    assert "Model Spam Signal" in rendered
+    assert "Lower model signal" in rendered
+    assert "Higher model signal" in rendered
+    assert "threshold 2.7" in rendered
+    assert "linear rescaling" in rendered
 
 
 def test_ham_message_is_not_flagged():
@@ -57,7 +71,8 @@ def test_ham_message_is_not_flagged():
 
     assert not at.exception, [e.value for e in at.exception]
     rendered = "\n".join(m.value for m in at.markdown)
-    assert "Likely ham" in rendered
+    assert "No spam pattern detected" in rendered
+    assert "not a guarantee" in rendered
 
 
 def test_empty_message_shows_validation_warning():
@@ -106,14 +121,44 @@ def test_performance_tab_reports_real_metrics():
     assert "0.9841" in values
 
 
-def test_non_english_message_gets_limitation_notice():
+def test_kannada_message_is_routed_to_honest_unsupported_notice():
     at = _app()
-    at.text_area[0].set_value("ನಿಮ್ಮ ಖಾತೆಗೆ ಸಂಬಂಧಿಸಿದ ಮಾಹಿತಿ ಬೇಕು ಎಂದು ಕರೆ ಮಾಡಿ")
+    at.text_area[0].set_value("ನಿಮ್ಮ ಖಾತೆ ಬ್ಲಾಕ್ ಆಗಿದೆ, ಈ ಲಿಂಕ್ ಒತ್ತಿ OTP ಕಳುಹಿಸಿ")
     at.button[0].click().run()
 
     assert not at.exception
-    infos = "\n".join(i.value for i in at.info)
-    assert "English" in infos
+    warnings = "\n".join(w.value for w in at.warning)
+    assert "Kannada message detection is not available yet" in warnings
+    assert "English" in warnings
+    rendered = "\n".join(m.value for m in at.markdown)
+    assert "Model Spam Signal" not in rendered
+    assert "Likely spam" not in rendered
+
+
+def test_other_script_gets_unsupported_notice():
+    at = _app()
+    at.text_area[0].set_value("உங்கள் கணக்கு முடக்கப்பட்டது, இந்த இணைப்பைத் திறக்கவும்")
+    at.button[0].click().run()
+
+    assert not at.exception
+    warnings = "\n".join(w.value for w in at.warning)
+    assert "not support" in warnings
+    assert "not scored" in warnings
+
+
+def test_author_credit_is_rendered():
+    at = _app()
+    rendered = "\n".join(m.value for m in at.markdown)
+    assert "Built by Charan AM" in rendered
+
+
+def test_about_tab_explains_hosted_privacy_honestly():
+    at = _app()
+    rendered = "\n".join(m.value for m in at.markdown)
+    assert "Streamlit Community Cloud" in rendered
+    assert "not been independently verified" in rendered
+    assert "runs entirely on the local machine" not in rendered.lower()
+
 
 
 def test_about_tab_exposes_dataset_and_privacy():

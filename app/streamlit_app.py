@@ -1,13 +1,17 @@
 ﻿"""Streamlit interface for the AI-Based Cyber Scam Detection and Awareness System.
 
-Run with:  streamlit run app\\streamlit_app.py
+Run with:  python -m streamlit run app\\streamlit_app.py
 
 Design rules enforced here:
 * the app never trains a model; it only loads the checksummed artifact;
-* the model score is shown as uncalibrated output, never as a confidence;
+* the 0-10 gauge is a linear rescaling of raw model output for display only,
+  never a probability or a risk band;
 * model explanation, rule-based indicators and awareness guidance are three
   visually separate layers and are never merged into one claim;
-* submitted messages are processed in memory and never stored.
+* English text is routed to the English classifier; Kannada text is never sent
+  through it, because that model was not trained on Kannada;
+* submitted messages are held in memory for the session and never written to
+  disk by this code.
 """
 
 from __future__ import annotations
@@ -22,14 +26,16 @@ if str(SRC) not in sys.path:
 
 import streamlit as st
 
-from scamdetector import __version__, awareness, config, present
+from scamdetector import __version__, awareness, config, guidance, present
 from scamdetector.explain import detect_signals
+from scamdetector.language import detect_language
 from scamdetector.predict import (
     ArtifactError,
     MessageValidationError,
     is_probably_non_english,
     load_model,
     predict_message,
+    validate_message,
 )
 from scamdetector import evaluate
 
@@ -39,19 +45,6 @@ EXAMPLE_MESSAGE = (
     "and OTP on WhatsApp within 24 hours."
 )
 
-SIGNAL_TO_CATEGORY = {
-    "otp": "otp",
-    "url": "phishing",
-    "short_url": "phishing",
-    "email": "phishing",
-    "prize": "lottery",
-    "job": "fake_jobs",
-    "investment": "investment",
-    "payment": "upi",
-    "amount": "upi",
-    "urgency": "banking",
-    "phone": "banking",
-}
 
 CSS = """
 <style>
@@ -82,7 +75,52 @@ h1, h2, h3, h4 { letter-spacing: -0.01em; }
 }
 .result.spam { border-left: 6px solid #ff6b6b; }
 .result.ham { border-left: 6px solid #35d07f; }
-.result h3 { margin: 0 0 .3rem 0; font-size: 1.25rem; }
+.result h3 { margin: 0; font-size: 1.3rem; }
+.result-head { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; margin: .15rem 0 .45rem 0; }
+.status {
+  font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  padding: .22rem .55rem; border-radius: 999px; border: 1px solid transparent;
+}
+.status.spam { color: #ffd7d7; background: rgba(255,107,107,.14); border-color: rgba(255,107,107,.55); }
+.status.ham { color: #c8ffe0; background: rgba(53,208,127,.13); border-color: rgba(53,208,127,.5); }
+.gauge-card {
+  border: 1px solid #23405a; border-radius: 14px; padding: 1rem 1.2rem .9rem;
+  background: linear-gradient(135deg, rgba(14,33,50,.95), rgba(9,20,32,.95));
+  margin-bottom: .4rem;
+}
+.gauge-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.gauge-title { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #7fd4ea; }
+.gauge-value { font-size: 2rem; font-weight: 700; color: #eaf6ff; font-variant-numeric: tabular-nums; line-height: 1; }
+.gauge-max { font-size: .9rem; font-weight: 500; color: #9db4c7; }
+.gauge-track {
+  position: relative; height: 14px; margin: 1.5rem 0 2rem;
+  border-radius: 999px; background: linear-gradient(90deg, #17324a, #245a76);
+  border: 1px solid #23405a;
+}
+.gauge-fill {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, #2bb3a3, #f5c451 58%, #ff6b6b);
+  width: var(--fill); animation: gauge-fill .9s cubic-bezier(.22,.61,.36,1) both;
+}
+@keyframes gauge-fill { from { width: 0; } to { width: var(--fill); } }
+.gauge-marker {
+  position: absolute; top: -5px; bottom: -5px; width: 2px;
+  background: #eaf6ff; box-shadow: 0 0 0 2px rgba(7,13,21,.65);
+}
+.gauge-marker-label {
+  position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+  font-size: .72rem; color: #cfe6f5; white-space: nowrap;
+  background: rgba(7,13,21,.9); padding: 0 .3rem; border-radius: 4px;
+}
+.gauge-scale { display: flex; justify-content: space-between; font-size: .78rem; color: #9db4c7; }
+@media (prefers-reduced-motion: reduce) { .gauge-fill { animation: none; } }
+.topic-note { color: #9db4c7; font-size: .85rem; margin-top: -.3rem; }
+.credit {
+  text-align: center; margin: 2.4rem 0 .4rem; font-size: .78rem;
+  letter-spacing: .08em; text-transform: uppercase; color: #5f7f97;
+}
+.credit span { color: #8fb6cf; }
+
 .small { color: #9db4c7; font-size: .88rem; }
 .layer-title {
   font-size: .78rem; letter-spacing: .08em; text-transform: uppercase;
@@ -116,13 +154,14 @@ def _hero() -> None:
         """
 <div class="hero">
   <h1>Cyber Scam Detection &amp; Awareness</h1>
-  <p>An explainable machine-learning check for English SMS, with verified Indian
-  cyber-safety guidance and honest performance reporting.</p>
+  <p>An explainable machine-learning check for English SMS, with Indian
+  cyber-safety guidance in English and Kannada, and honest performance reporting.</p>
   <div class="badges">
     <span class="badge">TF-IDF + Logistic Regression</span>
-    <span class="badge">English SMS only</span>
-    <span class="badge">Runs locally</span>
-    <span class="badge">No message storage</span>
+    <span class="badge">English SMS classifier</span>
+    <span class="badge">Kannada awareness content</span>
+    <span class="badge">Explainable by design</span>
+    <span class="badge">In-memory processing</span>
   </div>
 </div>
 """,
@@ -141,31 +180,59 @@ def _metrics() -> dict:
     return evaluate.load_metrics()
 
 
-def _guidance_for(signal_codes: list[str], language: str) -> list[awareness.Category]:
-    wanted: list[str] = []
-    for code in signal_codes:
-        category_id = SIGNAL_TO_CATEGORY.get(code)
-        if category_id and category_id not in wanted:
-            wanted.append(category_id)
-    if not wanted:
-        wanted = ["phishing", "otp"]
+def _guidance_for(
+    signal_codes: list[str], text: str, language: str = "en", limit: int = 3
+) -> list[awareness.Category]:
+    """Pick related awareness topics; never a predicted scam category."""
+    wanted = guidance.related_category_ids(signal_codes, text, limit=limit)
     content = awareness.load_awareness(language)
     by_id = {category.id: category for category in content.categories}
-    return [by_id[category_id] for category_id in wanted if category_id in by_id][:2]
+    return [by_id[category_id] for category_id in wanted if category_id in by_id]
+
+
+def _gauge_html(result) -> str:
+    """Render the 0-10 model-signal gauge as lightweight animated HTML."""
+    score = present.gauge_score(result.raw_score)
+    threshold = present.gauge_threshold(result.threshold)
+    fill = min(max(score * 10.0, 0.0), 100.0)
+    marker = min(max(threshold * 10.0, 0.0), 100.0)
+    low, high = present.gauge_ends()
+    return f"""
+<div class="gauge-card">
+  <div class="gauge-head">
+    <span class="gauge-title">{present.gauge_heading()}</span>
+    <span class="gauge-value">{score:.1f}<span class="gauge-max">/10</span></span>
+  </div>
+  <div class="gauge-track" role="img" aria-label="Model spam signal {score:.1f} out of 10; decision threshold {threshold:.1f} out of 10">
+    <div class="gauge-fill" style="--fill:{fill:.1f}%"></div>
+    <div class="gauge-marker" style="left:{marker:.1f}%">
+      <span class="gauge-marker-label">threshold {threshold:.1f}</span>
+    </div>
+  </div>
+  <div class="gauge-scale"><span>{low}</span><span>{high}</span></div>
+</div>
+"""
 
 
 def _render_result(result, message: str) -> None:
     css_class = "spam" if result.flagged else "ham"
+    status = "Flagged" if result.flagged else "Not flagged"
     st.markdown(
         f"""
 <div class="result {css_class}">
   <div class="layer-title">Layer 1 — model prediction</div>
-  <h3>{present.label_text(result.label)}</h3>
-  <div class="small">{present.score_caption(result.raw_score, result.threshold)}</div>
+  <div class="result-head">
+    <h3>{present.label_text(result.label)}</h3>
+    <span class="status {css_class}">{status}</span>
+  </div>
+  <div class="small">{present.result_caveat(result.label)}</div>
 </div>
 """,
         unsafe_allow_html=True,
     )
+
+    st.markdown(_gauge_html(result), unsafe_allow_html=True)
+    st.caption(present.score_caption(result.raw_score, result.threshold))
 
     if result.message_length and is_probably_non_english(message):
         st.info(
@@ -219,11 +286,14 @@ def _render_result(result, message: str) -> None:
         '<div class="layer-title">Layer 3 — verified awareness guidance</div>',
         unsafe_allow_html=True,
     )
+    st.markdown("#### Related awareness topics")
     st.caption(
-        "Curated safety guidance from this project's content files, independent "
-        "of the model. It is general advice, not a judgement about this message."
+        "Suggested reading based on patterns found in this text. These are not a "
+        "prediction of the scam type and they do not confirm that this message is "
+        "fraudulent. All categories remain available in the Cyber awareness tab."
     )
-    for category in _guidance_for([signal.code for signal in signals], "en"):
+    categories = _guidance_for([signal.code for signal in signals], message, "en")
+    for category in categories:
         with st.expander(f"{category.title} — what to check", expanded=True):
             st.write(category.summary)
             st.markdown("**Warning signs**")
@@ -236,18 +306,74 @@ def _render_result(result, message: str) -> None:
     st.caption(present.disclaimer_text())
 
 
+def _unsupported_script(language: str, message: str) -> None:
+    """Explain honestly that this script has no validated classifier."""
+    if language == "kn":
+        st.warning(
+            "Kannada message detection is not available yet. The classifier was "
+            "trained on English SMS only, and this project has not obtained an "
+            "open, expert-labelled Kannada SMS dataset that it can validate. The "
+            "message was not scored, so no prediction is shown.",
+            icon="🌐",
+        )
+        st.caption(
+            "Kannada awareness guidance is still available below and in the Cyber "
+            "awareness tab, although it is awaiting native-speaker review."
+        )
+    else:
+        st.warning(
+            "This message is written in a script the app does not support for "
+            "detection. English SMS detection is available; Kannada detection is "
+            "not yet available. The message was not scored.",
+            icon="🌐",
+        )
+
+    signals = detect_signals(message)
+    st.markdown(
+        '<div class="layer-title">Rule-based message characteristics</div>',
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "The rule layer uses English keywords, so on this message it can only "
+        "recognise language-independent patterns such as links, numbers and amounts."
+    )
+    if signals:
+        st.dataframe(present.signal_rows(signals), hide_index=True, width="stretch")
+    else:
+        st.caption("No language-independent pattern was detected in this message.")
+
+    language_code = "kn" if language == "kn" else "en"
+    st.markdown("#### Related awareness topics")
+    st.caption(
+        "General safety reading, not a judgement about this message. All categories "
+        "remain available in the Cyber awareness tab."
+    )
+    for category in _guidance_for([signal.code for signal in signals], message, language_code):
+        with st.expander(f"{category.title} — what to check", expanded=True):
+            st.write(category.summary)
+            st.markdown("**Warning signs**")
+            for item in category.warning_signs:
+                st.markdown(f"- {item}")
+            st.markdown("**What to do**")
+            for item in category.prevention:
+                st.markdown(f"- {item}")
+
+
+
 def _clear_state() -> None:
     """Callback: reset the text box and any previous result before rerun."""
     st.session_state.message_input = ""
     st.session_state.pop("result", None)
     st.session_state.pop("analysed_text", None)
+    st.session_state.pop("unsupported_script", None)
 
 
 def _detection_tab() -> None:
     st.subheader("Check a message")
     st.caption(
-        "Paste an SMS you received. Do not paste real OTPs, PINs, card numbers "
-        "or account numbers — the tool does not need them."
+        "Paste an SMS you received. English messages are scored by the model. "
+        "Kannada messages are recognised but not scored yet. Do not paste real "
+        "OTPs, PINs, card numbers or account numbers — the tool does not need them."
     )
 
     if "message_input" not in st.session_state:
@@ -270,30 +396,44 @@ def _detection_tab() -> None:
 
     if analyse:
         try:
-            artifact = _artifact()
-            st.session_state.result = predict_message(message, artifact=artifact)
-            st.session_state.analysed_text = message
+            text = validate_message(message)
+            script = detect_language(text)
+            st.session_state.analysed_text = text
+            if script in ("kn", "other"):
+                st.session_state.pop("result", None)
+                st.session_state.unsupported_script = script
+            else:
+                artifact = _artifact()
+                st.session_state.pop("unsupported_script", None)
+                st.session_state.result = predict_message(text, artifact=artifact)
         except MessageValidationError as exc:
             st.session_state.pop("result", None)
+            st.session_state.pop("unsupported_script", None)
             st.warning(str(exc), icon="✏️")
         except ArtifactError as exc:
             st.session_state.pop("result", None)
+            st.session_state.pop("unsupported_script", None)
             st.error(f"The model could not be loaded safely. {exc}", icon="🛑")
         except Exception as exc:  # pragma: no cover - defensive UI guard
             st.session_state.pop("result", None)
+            st.session_state.pop("unsupported_script", None)
             st.error(
                 "Something went wrong while analysing the message. "
                 f"Technical detail: {type(exc).__name__}.",
                 icon="🛑",
             )
 
+    unsupported = st.session_state.get("unsupported_script")
     result = st.session_state.get("result")
-    if result is not None:
+    if unsupported:
+        _unsupported_script(unsupported, st.session_state.get("analysed_text", ""))
+    elif result is not None:
         _render_result(result, st.session_state.get("analysed_text", ""))
     else:
         with st.expander("Try an example message"):
             st.code(EXAMPLE_MESSAGE, language=None)
             st.caption("Copy it into the box above, then choose Analyse message.")
+
 
 
 def _awareness_tab() -> None:
@@ -504,11 +644,12 @@ def _performance_tab() -> None:
         """
 - The dataset is a 2011-era collection of English SMS. Modern scams delivered
   over WhatsApp, RCS, email or voice calls are not represented.
-- Only English is supported. Kannada and other Indian-language messages are
-  outside the training data, so predictions on them are unreliable.
+- Detection covers English text. Kannada messages are recognised by script and
+  deliberately not scored, because no validated Kannada SMS dataset was used.
 - Spam in this dataset means unwanted or fraudulent SMS. The model does not
   distinguish between scam types and cannot confirm that a message is a crime.
-- The score is uncalibrated and is shown only as raw model output.
+- The score is uncalibrated. The 0-10 gauge is a linear rescaling for display,
+  not a probability and not a risk band.
 - Performance on real, current messages can differ from these results.
 """
     )
@@ -574,9 +715,12 @@ MIT-licensed code; attribution is recorded in `THIRD_PARTY_NOTICES.md` and
 
     st.markdown("### Privacy")
     st.write(present.privacy_note())
+    st.markdown("**Where the app runs changes what happens to your message**")
+    st.markdown(present.local_privacy_note())
+    st.markdown(present.hosted_privacy_note())
     st.caption(
-        "The app runs entirely on the local machine. There are no external API "
-        "calls for inference and no analytics or tracking."
+        "Never submit a real OTP, PIN, card number or bank account number to any "
+        "online tool, including this one."
     )
 
     st.markdown("### Project details")
@@ -620,12 +764,14 @@ def main() -> None:
     with about:
         _about_tab()
 
+    st.markdown('<div class="credit">Built by Charan AM</div>', unsafe_allow_html=True)
+
     with st.sidebar:
         st.markdown("### Quick facts")
         st.markdown(
             "- Trained on 5,144 unique SMS after de-duplication\n"
             "- Binary classification: ham / spam\n"
-            "- English text only\n"
+            "- English SMS detection; Kannada guidance only\n"
             "- Threshold chosen on validation data\n"
             "- Scores are uncalibrated"
         )
