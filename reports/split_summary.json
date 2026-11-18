@@ -1,0 +1,47 @@
+{
+  "generated_at": "2026-11-18T08:43:44+00:00",
+  "seed": 42,
+  "ratios": {
+    "train": 0.8,
+    "val": 0.1,
+    "test": 0.1
+  },
+  "raw_rows": 5574,
+  "expected_raw_rows": 5574,
+  "expected_label_counts": {
+    "ham": 4827,
+    "spam": 747
+  },
+  "dataset_sha256": "7d039a24a6083ed9ef0f806ebad56bbb976e3aeb8de05669173bfdc4996c239d",
+  "dedupe": {
+    "raw_rows": 5574,
+    "unique_dedupe_keys": 5144,
+    "duplicates_removed": 430,
+    "rows_after_resolution": 5144,
+    "conflict_groups": 0,
+    "conflicts_resolved_by_majority": 0,
+    "conflicts_dropped_as_ties": 0
+  },
+  "splits": {
+    "train": {
+      "rows": 4115,
+      "ham": 3613,
+      "spam": 502
+    },
+    "val": {
+      "rows": 514,
+      "ham": 452,
+      "spam": 62
+    },
+    "test": {
+      "rows": 515,
+      "ham": 452,
+      "spam": 63
+    }
+  },
+  "leakage_check": {
+    "train__val": 0,
+    "train__test": 0,
+    "val__test": 0
+  }
+}

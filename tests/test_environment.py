@@ -20,6 +20,7 @@ def test_package_imports_from_another_directory(tmp_path):
         cwd=tmp_path,
         capture_output=True,
         text=True,
+        timeout=60,
     )
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == "0.1.0"

@@ -1,0 +1,10 @@
+{
+  "raw_rows": 5574,
+  "unique_dedupe_keys": 5144,
+  "duplicates_removed": 430,
+  "rows_after_resolution": 5144,
+  "conflict_groups": 0,
+  "conflicts_resolved_by_majority": 0,
+  "conflicts_dropped_as_ties": 0,
+  "conflicts": []
+}

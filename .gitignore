@@ -2,7 +2,9 @@
 .venv/
 .venv-verify/
 
-# Python bytecode and caches
+# Python build artifacts
+build/
+dist/
 __pycache__/
 *.py[cod]
 *.egg-info/

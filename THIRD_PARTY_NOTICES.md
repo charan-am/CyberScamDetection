@@ -14,11 +14,18 @@ this project.
 - **License:** Creative Commons Attribution 4.0 International (CC BY 4.0), as published
   with the dataset.
 
-The dataset is redistributed here for academic, non-commercial use with attribution.
-The exact download URL, dataset version, file checksum and a copy of the license
-reference are recorded in `data/README.md` and `docs/dataset.md` when the dataset is
-added in Phase 1. No dataset URL or license text is asserted here beyond the
-attribution above.
+The dataset is redistributed here with attribution under the CC BY 4.0 terms
+published with it by the UCI Machine Learning Repository; CC BY 4.0 permits reuse,
+including commercial reuse, provided attribution is given. The dataset's bundled
+`readme` also asks users to cite the authors' paper and to notify them of use.
+The corpus is committed at `data/raw/SMSSpamCollection` with the archive's own
+`data/raw/readme`.
+
+- **Download:** `https://archive.ics.uci.edu/static/public/228/sms+spam+collection.zip`
+- **SHA-256:** `7d039a24a6083ed9ef0f806ebad56bbb976e3aeb8de05669173bfdc4996c239d`
+- **Rows:** 5,574 (4,827 ham, 747 spam)
+
+Full provenance and preparation notes: `data/README.md` and `docs/dataset.md`.
 
 ## Python dependencies
 

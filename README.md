@@ -34,7 +34,7 @@ ability is claimed.
 ## Setup
 
 ```cmd
-cd /d "C:\Users\Charan A M\CyberScamDetection"
+cd /d "%USERPROFILE%\CyberScamDetection"
 uv venv --python 3.12.16 .venv
 .venv\Scripts\activate
 uv pip install -r requirements.txt -r requirements-dev.txt
@@ -73,5 +73,5 @@ licenses are not interchangeable.
 
 ## Privacy
 
-Messages submitted to the application are held in session state only. They are never
-written to disk, logged, or sent to a third party.
+The application is designed to hold submitted messages in session state only: not
+written to disk, not logged, and not sent to any third party.

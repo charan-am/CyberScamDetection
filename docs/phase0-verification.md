@@ -63,6 +63,10 @@ git status --short
 
 The suite's assertion was run under the system Python 3.14.3 interpreter:
 
+```cmd
+"C:\Program Files\Python314\python.exe" -c "import sys; assert sys.version_info[:2] == (3, 12), f'Expected 3.12, got {sys.version.split()[0]}'"
+```
+
 ```text
 AssertionError: Expected 3.12, got 3.14.3
 ```
@@ -72,8 +76,8 @@ add an unnecessary dependency, so the guard was proven at the assertion level.
 
 ## Clean-environment install proof
 
-`.venv-verify` was created from the committed manifests, installed all 44 pinned
-distributions, and reported:
+`.venv-verify` was created from the committed manifests and installed 44 distributions
+(39 runtime pins + 5 development pins), reporting:
 
 ```text
 import pandas, numpy, sklearn, joblib, streamlit, pytest -> ok
