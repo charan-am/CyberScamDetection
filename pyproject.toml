@@ -10,3 +10,13 @@ requires-python = ">=3.12,<3.13"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "unit: pure-function tests",
+    "integration: cross-module tests",
+    "app: Streamlit AppTest tests",
+    "slow: tests that train a model or read the full dataset",
+]
