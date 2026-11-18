@@ -10,7 +10,7 @@ def test_interpreter_is_python_312():
 
 
 def test_package_version_matches_declared_version():
-    assert scamdetector.__version__ == "0.1.0"
+    assert scamdetector.__version__ == "0.1.1"
     assert version("scamdetector") == scamdetector.__version__
 
 
@@ -23,4 +23,4 @@ def test_package_imports_from_another_directory(tmp_path):
         timeout=60,
     )
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "0.1.0"
+    assert result.stdout.strip() == "0.1.1"
