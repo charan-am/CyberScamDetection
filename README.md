@@ -17,10 +17,10 @@ Four user-facing areas, available as tabs in one Streamlit app:
 
 | Area | Contents |
 |---|---|
-| **Message detection** | Paste an SMS, get the predicted class, the raw model score (explicitly labelled uncalibrated), the words that moved the decision, rule-based message characteristics, and tailored safety guidance |
+| **Message detection** | Paste an SMS, get the predicted class, an animated 0–10 **Model Spam Signal** gauge with the real decision threshold marked, the words that moved the decision, rule-based message characteristics, related awareness topics and safety guidance |
 | **Cyber awareness** | Seven Indian scam categories — UPI, OTP, phishing, fake jobs, lottery/prize, investment, banking impersonation/KYC — in English and Kannada, plus official reporting channels with verified dates |
 | **Model performance** | Real test-split metrics, confusion matrix, baseline comparison, model configuration, and an explicit list of what the numbers do not cover |
-| **About & privacy** | How a prediction is produced, dataset attribution, model artifact details, privacy guarantees, licences |
+| **About & privacy** | How a prediction is produced, dataset attribution, model artifact details, honest local-versus-hosted privacy explanation, licences |
 
 The three analysis layers are deliberately kept separate and labelled in the interface:
 
@@ -28,9 +28,11 @@ The three analysis layers are deliberately kept separate and labelled in the int
 2. **Rule-based characteristics** — links, OTP requests, prize claims, urgency, amounts.
 3. **Verified awareness guidance** — curated advice from `content/*.json`, independent of the model.
 
-The classifier is **English-only**. Kannada exists only as educational content and is
-marked `reviewed: false` until a Kannada speaker verifies it. No Kannada detection
-ability is claimed.
+The classifier is **English-only**. The interface detects Kannada script and does not
+send those messages through the English model; it explains that Kannada detection is
+not available yet instead of guessing. Kannada awareness content exists but is marked
+`reviewed: false` until a Kannada speaker verifies it. Romanised Kannada is not
+supported. The dataset assessment is in `docs/kannada-assessment.md`.
 
 ---
 
@@ -114,6 +116,9 @@ CyberScamDetection/
 │   ├── model-card.md             # intended use, metrics, limitations, ethics
 │   ├── architecture.md           # layers, data flow, module responsibilities
 │   ├── demo-script.md            # five-minute demonstration script
+│   ├── deployment.md             # Streamlit Community Cloud readiness and privacy
+│   ├── kannada-assessment.md     # dataset feasibility findings and decision
+│   ├── verification.md           # test and runtime evidence
 │   ├── phase0-verification.md    # environment evidence
 │   └── superpowers/              # approved design and plans
 ├── models/
@@ -130,9 +135,12 @@ CyberScamDetection/
 │   ├── evaluate.py               # metrics, baselines, reports
 │   ├── predict.py                # checksum verification, validation, inference
 │   ├── explain.py                # contributions and rule-based signals
-│   ├── present.py                # honest UI strings (testable, no Streamlit)
+│   ├── language.py               # script detection for English/Kannada routing
+│   ├── guidance.py               # message characteristics -> awareness topics
+│   ├── present.py                # honest UI strings and 0-10 gauge maths
 │   └── awareness.py              # validated bilingual content and channels
-└── tests/                        # 99 unit and integration tests
+├── .streamlit/config.toml        # shared theme for local and hosted runs
+└── tests/                        # unit and integration tests
 ```
 
 Training code never imports Streamlit. The app never trains: it loads
@@ -165,34 +173,49 @@ python -m pytest -m "not slow"
 ```
 
 The suite covers data parsing and integrity, dedupe and leakage, threshold selection,
-artifact checksum and version checks, prediction validation, explanation direction,
-presentation strings, content schema and review flags, and the Streamlit app itself
-(rendering, spam and ham predictions, empty input, clear button, Kannada warning,
-performance metrics) through `streamlit.testing.v1.AppTest`.
+artifact checksum and version checks, prediction validation, script routing, contextual
+topic selection, gauge conversion and its disclaimer, explanation direction, presentation
+strings, content schema and review flags, and the Streamlit app itself through
+`streamlit.testing.v1.AppTest`.
 
 ---
 
 ## Privacy
 
-Submitted messages are processed in memory, are never written to disk, never logged,
-and never sent to a third-party service. Links, emails, amounts and phone numbers are
-replaced with placeholders before the text reaches the model. The app runs locally with
-no paid APIs and no analytics.
+The application's own code does not intentionally store submitted messages. A message
+is held in memory for the current session, used to produce the result you see, and is
+not written to disk by this code. Links, emails, amounts and phone numbers are replaced
+with placeholders before the text reaches the model.
+
+What happens next depends on where the app runs:
+
+- **Local execution** — the message is processed by the Python process on your own
+  machine. Inference uses the bundled model file; there is no external AI service, no
+  paid API and no analytics.
+- **Streamlit Community Cloud** — the message is sent to Streamlit's servers so the app
+  can render a result. This project's code still does not persist messages or call an
+  external inference API, but Streamlit's infrastructure logging, retention and access
+  controls are outside this codebase and have not been independently verified here.
+
+Never submit a real OTP, PIN, card number or bank account number to any online tool.
+Deployment notes are in `docs/deployment.md`.
 
 ---
 
 ## Limitations
 
-- English SMS only; the model has never seen Kannada or other Indian-language messages.
+- English SMS detection only; Kannada messages are recognised but deliberately not
+  scored, and romanised Kannada is not supported at all.
 - Dataset from 2011; modern scam channels (WhatsApp, RCS, email, voice, deepfakes) are
   out of distribution.
 - Binary ham/spam classification; it does not identify scam type and cannot confirm
   that a message is a crime.
-- The score is uncalibrated and is never presented as a probability or a percentage.
+- The score is uncalibrated. The 0–10 gauge is a linear display rescaling of raw model
+  output — not a probability, not a percentage and not a risk band.
 - 1 of 63 spam messages in the test split was missed; 7 ham messages were flagged.
 - Kannada content is an unreviewed translation and is labelled as such in the app.
 - Screenshots are not bundled because the build machine has no browser automation;
-  the interface is verified by 10 AppTest integration tests instead.
+  the interface is verified by AppTest integration tests instead.
 
 ---
 

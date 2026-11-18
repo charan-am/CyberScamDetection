@@ -25,7 +25,8 @@
 
 - Any decision with legal, financial or safety consequences.
 - Screening WhatsApp, RCS, email, voice calls, screenshots or images.
-- Kannada, Hindi or other Indian-language messages: the model has never seen them.
+- Kannada, Hindi or other Indian-language messages: the model has never seen them. The app
+  detects Kannada script, declines to score it, and says so rather than guessing.
 - Detecting every kind of cyber scam, or confirming that a message is a crime.
 - Production deployment, multi-tenant use, or autonomous blocking of messages.
 
@@ -56,6 +57,11 @@ model memorising particular phone numbers or links.
 
 The threshold favours recall (missing a scam is treated as worse than a false alarm).
 The raw score is uncalibrated and is never presented as a probability.
+
+In the interface the raw output is multiplied by ten for a 0–10 "Model Spam Signal" gauge,
+with the 0.27 threshold shown at the same scale (2.7/10). The multiplication changes no
+decision: the label still comes from comparing the raw output with 0.27. Measured range on
+the test split was 0.0008 to 0.9995, so the rescaling stays inside the gauge.
 
 ## Evaluation
 
@@ -103,7 +109,12 @@ different layer from the model explanation.
   awareness guidance and reporting channels.
 - **False positives matter.** A legitimate message flagged as spam could unfairly
   discredit a sender. The interface labels the result "likely" and explains it.
-- **No message retention.** Submitted text is processed in memory only.
+- **No intentional message retention.** Submitted text is processed in memory by the
+  application code, which writes nothing to disk and calls no external inference service.
+  When the app is hosted, the browser sends the message to the hosting platform to render
+  the result; that infrastructure's logging and retention are outside this code.
+- **Gauge, not probability.** The 0–10 signal is a display rescaling; the interface states
+  that it is uncalibrated and draws the real threshold rather than risk bands.
 - **Sensitive-token masking.** Links, numbers, emails and amounts are masked before
   classification.
 - **Unreviewed Kannada content.** Kannada guidance is machine-drafted and marked

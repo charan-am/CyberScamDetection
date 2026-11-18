@@ -85,11 +85,14 @@ coefficients give an exact explanation, so no approximation library is needed.
 which weights recall twice as heavily as precision: missing a scam is worse than a false
 alarm. The test split was untouched during that choice.
 
-**Can it detect Kannada scams?** No. The model is English-only and the report says so.
-Kannada exists only as awareness content.
+**Can it detect Kannada scams?** Not yet. The model is English-only, and the interface
+detects Kannada script and says so instead of scoring it. Kannada exists as awareness
+content, still awaiting native-speaker review.
 
-**Is the score a probability?** No. It is uncalibrated model output and the interface
-labels it that way. Calibration is listed as future work.
+**Is the score a probability?** No. It is uncalibrated model output. The 0–10 gauge is
+a linear rescaling for display only, with the real threshold marked, and the caption says
+it is not a probability.
 
-**What happens to the message?** It stays in memory, is masked for links/numbers, and is
-never stored or sent anywhere.
+**What happens to the message?** The application code holds it in memory, masks links,
+numbers and amounts, and does not write it to disk. On Streamlit Community Cloud the
+message is sent to Streamlit's servers to render the result; run locally if that matters.

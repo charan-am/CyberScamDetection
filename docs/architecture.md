@@ -11,7 +11,7 @@
 ┌───────────────────────────▼──────────────────────────────────┐
 │ Domain              src/scamdetector/                        │
 │  config · data · features · train · evaluate · predict       │
-│  explain · present · awareness                               │
+│  explain · present · awareness · language · guidance         │
 └───────────────────────────┬──────────────────────────────────┘
                             │ joblib artifact + checksum, reports/
 ┌───────────────────────────▼──────────────────────────────────┐
@@ -26,6 +26,10 @@ Rules enforced by the code layout and tests:
 - `present.py` contains every user-facing sentence and imports no Streamlit, so wording
   can be unit tested.
 - Awareness content is data (`content/*.json`), validated on load, not code.
+- `language.py` decides whether a message can be scored at all, so the app never sends
+  text the model was not trained on through the classifier.
+- `guidance.py` selects awareness topics from message characteristics and knows nothing
+  about model scores, keeping the three layers independent.
 
 ## Module responsibilities
 
@@ -38,7 +42,9 @@ Rules enforced by the code layout and tests:
 | `evaluate.py` | Binary metrics, spam scores, majority and keyword baselines, report writers, metrics loader |
 | `predict.py` | Checksum verification, artifact loading and caching, input validation, inference, non-English heuristic |
 | `explain.py` | Exact linear-model term contributions and rule-based message signals |
-| `present.py` | Plain-language labels, honest score captions, table rows, disclaimer and privacy text |
+| `language.py` | Script detection over Unicode ranges; decides whether the English model applies |
+| `guidance.py` | Maps rule signals and wording cues to awareness-category ids, ordered by priority |
+| `present.py` | Plain-language labels, gauge rescaling, honest score captions, table rows, disclaimer and privacy text |
 | `awareness.py` | Schema validation and loading of bilingual content and reporting channels |
 
 ## Training flow
@@ -59,16 +65,27 @@ Rules enforced by the code layout and tests:
 ## Inference flow
 
 ```
-text ──► validate_message ──► normalise + mask ──► TF-IDF ──► LogisticRegression
-                                                                   │
-                          raw spam score ──► compare with threshold 0.27
-                                                                   │
-                    PredictionResult(label, raw_score, threshold, contributions)
-                                                                   │
-              app: label card → explanation tables → rule signals → guidance
+text ──► validate_message ──► detect_language
+                                   │
+             ┌─────────────────────┴─────────────────────┐
+        "en" │                                           │ "kn" / "other"
+             ▼                                           ▼
+  normalise + mask ──► TF-IDF ──► LogisticRegression   not scored: the app explains
+             │                                           which languages are supported
+   raw spam score ──► compare with threshold 0.27         and shows rule signals only
+             │
+  PredictionResult(label, raw_score, threshold, contributions)
+             │
+  app: label card + 0-10 gauge → explanation tables → rule signals → related topics
 ```
 
-The submitted message is never written to disk, logged, or sent anywhere.
+The 0–10 gauge is a display-only linear rescaling (`gauge_score`), with the real
+threshold drawn as a marker. It is never described as a probability or a risk band.
+
+The application code does not intentionally persist the submitted message: it is held in
+memory for the session, masked before vectorising, and never written to disk or logged.
+Where the app runs still matters — on Streamlit Community Cloud the text travels to
+Streamlit's servers to render the result, which `present.hosted_privacy_note()` states.
 
 ## Failure handling
 
