@@ -1,0 +1,25 @@
+# Virtual environments
+.venv/
+.venv-verify/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Generated data artifacts
+data/processed/
+
+# Local secrets and logs
+.streamlit/secrets.toml
+*.log
+
+# OS noise
+Thumbs.db
+.DS_Store
+
+# Agent scratch workspace (ledger, review packages)
+.superpowers/
