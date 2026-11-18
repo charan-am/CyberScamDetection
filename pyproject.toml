@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scamdetector"
+version = "0.1.0"
+description = "Explainable SMS scam detection and cyber awareness application"
+requires-python = ">=3.12,<3.13"
+
+[tool.setuptools.packages.find]
+where = ["src"]
