@@ -1,0 +1,167 @@
+{
+  "language": "en",
+  "language_name": "English",
+  "reviewed": true,
+  "reviewer": null,
+  "review_note": "English content written and checked against public guidance from the cited official sources.",
+  "last_updated": "2026-11-18",
+  "categories": [
+    {
+      "id": "upi",
+      "title": "UPI payment scams",
+      "summary": "A fraudster talks you into scanning a QR code or entering your UPI PIN so that money leaves your account, usually while pretending to send you money.",
+      "example": "I am from the bank. Your refund is stuck. Scan this QR code and enter your UPI PIN to receive the amount.",
+      "warning_signs": [
+        "You are asked to scan a QR code or enter your PIN to receive money",
+        "An unexpected collect request appears in your UPI app",
+        "The caller claims to be bank staff, a merchant or a refund agent",
+        "You are told the request expires in a few minutes"
+      ],
+      "prevention": [
+        "A UPI PIN sends money. It is never needed to receive money",
+        "Reject collect requests you did not expect, even for small amounts",
+        "Check the payee name in your own app before approving anything"
+      ],
+      "checklist": [
+        "Do not scan a QR code to receive a payment",
+        "Reject the request and check your balance in the official app",
+        "If money was taken, call 1930 and report at cybercrime.gov.in"
+      ]
+    },
+    {
+      "id": "otp",
+      "title": "OTP and verification-code scams",
+      "summary": "Anyone who learns your one-time password can finish a transaction or reset your account. No genuine bank, company or government office ever asks you to share it.",
+      "example": "Your KYC expires today. Share the OTP we just sent to keep your account active.",
+      "warning_signs": [
+        "Someone asks for an OTP, CVV, PIN or password",
+        "A link is provided to 'verify' or 'reactivate' the account",
+        "The caller already knows part of your account or card number",
+        "A deadline is used to stop you thinking"
+      ],
+      "prevention": [
+        "Never share an OTP, CVV, PIN or password with anyone",
+        "No bank employee needs your OTP to help you",
+        "Open the bank app yourself instead of using a link in a message"
+      ],
+      "checklist": [
+        "Hang up or stop replying",
+        "Call the number printed on your card or passbook",
+        "Report the message to cybercrime.gov.in"
+      ]
+    },
+    {
+      "id": "phishing",
+      "title": "Phishing links and fake apps",
+      "summary": "Messages that look like a bank, courier, electricity board or government notice push you to a look-alike website or an APK file that steals credentials.",
+      "example": "Your electricity connection will be disconnected tonight. Update your details here: http://kseb-bill-update.example",
+      "warning_signs": [
+        "Shortened or misspelled web addresses",
+        "A request to install an APK file from outside an app store",
+        "The page asks for card details, net-banking credentials or an OTP",
+        "Threats of disconnection, suspension or legal action"
+      ],
+      "prevention": [
+        "Type the official website address yourself instead of tapping a link",
+        "Check the domain carefully, including spellings and endings",
+        "Install apps only from the official app stores"
+      ],
+      "checklist": [
+        "Do not open the link",
+        "Check the bill or account in the official app",
+        "Forward the message to cybercrime.gov.in and delete it"
+      ]
+    },
+    {
+      "id": "fake_jobs",
+      "title": "Fake job and task scams",
+      "summary": "Scammers advertise easy work-from-home jobs, then ask for a registration or joining fee, or use 'task' jobs to move stolen money through your account.",
+      "example": "Earn Rs 3,000 daily from home. Pay Rs 500 registration to start immediately. No interview needed.",
+      "warning_signs": [
+        "You must pay a fee to get a job",
+        "No interview and no written offer letter",
+        "Communication only through WhatsApp or Telegram",
+        "Very high pay for simple tasks such as liking videos",
+        "You are asked to receive money and forward it elsewhere"
+      ],
+      "prevention": [
+        "Legitimate employers do not charge candidates",
+        "Verify the company on its official website and on LinkedIn",
+        "Never let anyone route money through your bank account"
+      ],
+      "checklist": [
+        "Stop paying any 'registration' or 'training' fee",
+        "Collect the chat, number and payment details",
+        "Report at cybercrime.gov.in or call 1930"
+      ]
+    },
+    {
+      "id": "lottery",
+      "title": "Lottery and prize scams",
+      "summary": "You are told you won a lottery or draw you never entered. To release the prize you must pay tax, a processing fee or share account details.",
+      "example": "Congratulations! Your number won Rs 25,00,000 in the lucky draw. Pay Rs 6,500 processing fee to receive the prize.",
+      "warning_signs": [
+        "A prize from a draw you never entered",
+        "A fee, tax or courier charge must be paid first",
+        "Requests for bank details, Aadhaar or an OTP",
+        "A short deadline before the 'prize expires'"
+      ],
+      "prevention": [
+        "You cannot win a lottery you did not enter",
+        "Never pay money to receive money",
+        "Genuine prizes do not require an OTP or your PIN"
+      ],
+      "checklist": [
+        "Do not pay any fee",
+        "Do not share identity or bank documents",
+        "Report and block the sender"
+      ]
+    },
+    {
+      "id": "investment",
+      "title": "Investment and trading scams",
+      "summary": "Guaranteed-return schemes, fake trading apps and 'double your money' groups take deposits, show fake profits, then block withdrawals.",
+      "example": "Join our VIP trading group. Guaranteed 30% monthly return. Deposit Rs 10,000 today and withdraw anytime.",
+      "warning_signs": [
+        "Returns are described as guaranteed or risk-free",
+        "The adviser is not registered with SEBI",
+        "The app is shared as a link or APK, not through an app store",
+        "Withdrawals are blocked until you pay more 'tax' or 'fees'",
+        "Celebrity videos endorse the scheme"
+      ],
+      "prevention": [
+        "Check the adviser's SEBI registration number",
+        "Treat guaranteed high returns as a warning sign, not an offer",
+        "Keep evidence of every transfer"
+      ],
+      "checklist": [
+        "Do not deposit more money",
+        "Try a small withdrawal early to test the platform",
+        "Report to cybercrime.gov.in and, for unauthorised schemes, to RBI Sachet"
+      ]
+    },
+    {
+      "id": "banking",
+      "title": "Bank impersonation and KYC fraud",
+      "summary": "Callers pose as bank security staff, RBI or the police, claim your account is involved in crime, and ask you to move money to a 'safe account'.",
+      "example": "This is bank security. Your account is linked to money laundering. Transfer your balance to this RBI safe account to protect it.",
+      "warning_signs": [
+        "Instructions to move money to a 'safe', 'escrow' or 'government' account",
+        "Threats of arrest, account freeze or legal action",
+        "A request to install a screen-sharing or remote-access app",
+        "Caller ID that looks like the bank's number",
+        "Requests for card details, PIN or OTP"
+      ],
+      "prevention": [
+        "No bank or police officer asks you to transfer money to a safe account",
+        "End the call and dial the number on your card or passbook",
+        "Never install remote-access apps at a caller's request"
+      ],
+      "checklist": [
+        "Hang up immediately",
+        "Check your account in the official app",
+        "Call 1930 and report at cybercrime.gov.in if money moved"
+      ]
+    }
+  ]
+}

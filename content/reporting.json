@@ -1,0 +1,44 @@
+{
+  "last_verified": "2026-11-18",
+  "verification_method": "Each URL was fetched on 2026-11-18; the portal title and reachability were confirmed. The portal pages are client-rendered, so the text of each service was confirmed from the operator's published pages rather than scraped.",
+  "disclaimer": "This is awareness information, not legal advice. Use the official portal or helpline for a real complaint.",
+  "channels": [
+    {
+      "id": "cybercrime_portal",
+      "name": "National Cyber Crime Reporting Portal",
+      "operator": "Ministry of Home Affairs, Government of India",
+      "purpose": "File a cybercrime complaint online, including financial fraud, and track it.",
+      "url": "https://cybercrime.gov.in",
+      "phone": null,
+      "last_verified": "2026-11-18"
+    },
+    {
+      "id": "helpline_1930",
+      "name": "Cyber fraud helpline 1930",
+      "operator": "Ministry of Home Affairs, Government of India",
+      "purpose": "Report financial cyber fraud quickly so that banks can try to stop the transfer.",
+      "url": "https://cybercrime.gov.in",
+      "phone": "1930",
+      "last_verified": "2026-11-18",
+      "note": "The number is published by the national portal. If it does not connect, use the portal to file the complaint."
+    },
+    {
+      "id": "rbi_sachet",
+      "name": "RBI Sachet",
+      "operator": "Reserve Bank of India",
+      "purpose": "Report unauthorised deposit-taking and unregistered financial schemes.",
+      "url": "https://sachet.rbi.org.in",
+      "phone": null,
+      "last_verified": "2026-11-18"
+    },
+    {
+      "id": "cert_in",
+      "name": "CERT-In",
+      "operator": "Ministry of Electronics and Information Technology, Government of India",
+      "purpose": "Report cyber security incidents such as phishing infrastructure and malware.",
+      "url": "https://www.cert-in.org.in",
+      "phone": null,
+      "last_verified": "2026-11-18"
+    }
+  ]
+}
