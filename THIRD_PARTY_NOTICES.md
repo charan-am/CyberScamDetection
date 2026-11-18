@@ -32,3 +32,16 @@ Full provenance and preparation notes: `data/README.md` and `docs/dataset.md`.
 Runtime and development dependencies are listed with pinned versions in
 `requirements.txt` and `requirements-dev.txt`. Each dependency retains its own
 license; this project does not relicense them.
+
+| Dependency | Licence |
+|---|---|
+| scikit-learn | BSD-3-Clause |
+| pandas | BSD-3-Clause |
+| numpy | BSD-3-Clause |
+| joblib | BSD-3-Clause |
+| streamlit | Apache-2.0 |
+| pytest | MIT |
+| pyarrow | Apache-2.0 |
+
+Transitive dependencies keep their own licences as recorded in their distributions.
+
