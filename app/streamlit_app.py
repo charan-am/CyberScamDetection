@@ -236,6 +236,13 @@ def _render_result(result, message: str) -> None:
     st.caption(present.disclaimer_text())
 
 
+def _clear_state() -> None:
+    """Callback: reset the text box and any previous result before rerun."""
+    st.session_state.message_input = ""
+    st.session_state.pop("result", None)
+    st.session_state.pop("analysed_text", None)
+
+
 def _detection_tab() -> None:
     st.subheader("Check a message")
     st.caption(
@@ -259,13 +266,7 @@ def _detection_tab() -> None:
     analyse = left.button(
         "Analyse message", type="primary", width="stretch"
     )
-    clear = right.button("Clear", width="stretch")
-
-    if clear:
-        st.session_state.message_input = ""
-        st.session_state.pop("result", None)
-        st.session_state.pop("analysed_text", None)
-        st.rerun()
+    clear = right.button("Clear", on_click=_clear_state, width="stretch")
 
     if analyse:
         try:
